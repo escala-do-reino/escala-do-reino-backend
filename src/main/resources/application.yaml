@@ -1,3 +1,15 @@
 spring:
   application:
     name: escala-do-reino-backend
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/escaladoreino
+    username: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
