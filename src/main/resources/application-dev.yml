@@ -1,7 +1,4 @@
 spring:
-  application:
-    name: escala-do-reino-backend
-
   datasource:
     url: jdbc:postgresql://localhost:5432/escaladoreino
     username: postgres
@@ -10,6 +7,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+    show-sql: true
 
   flyway:
     enabled: true
+
+logging:
+  level:
+    org.springframework: INFO

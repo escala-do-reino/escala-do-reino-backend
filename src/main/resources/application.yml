@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: escala-do-reino
+
+  jpa:
+    open-in-view: false
+
+server:
+  port: 8080
