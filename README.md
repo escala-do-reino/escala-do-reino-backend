@@ -132,6 +132,35 @@ cd escala-do-reino
 
 ---
 
+## 📚 Documentação da API (Swagger)
+
+A API é documentada utilizando **Swagger (OpenAPI)**.
+
+Após iniciar a aplicação, acesse:
+- Interface Swagger UI:
+```
+http://localhost:8080/swagger-ui.html
+```
+
+ou
+
+```
+http://localhost:8080/swagger-ui/index.html
+```
+
+- JSON da especificação OpenAPI:
+```
+http://localhost:8080/v3/api-docs
+```
+
+### Como usar
+1. Inicie a aplicação
+2. Acesse o Swagger UI no navegador
+3. Explore os endpoints disponíveis
+4. Execute requisições diretamente pela interface
+
+---
+
 ## 🧪 Testes
 
 ```
@@ -163,4 +192,4 @@ Este projeto está sob a licença MIT.
 
 ## ✍️ Autor
 
-Desenvolvido por **Nathan Nolacio**
+Desenvolvido por **Nathan Nolacio**.
