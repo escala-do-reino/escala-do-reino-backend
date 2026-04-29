@@ -6,8 +6,13 @@ import com.nathannolacio.escala_do_reino_backend.auth.dto.RegisterRequest;
 import com.nathannolacio.escala_do_reino_backend.auth.entity.Role;
 import com.nathannolacio.escala_do_reino_backend.auth.entity.User;
 import com.nathannolacio.escala_do_reino_backend.auth.repository.UserRepository;
+import com.nathannolacio.escala_do_reino_backend.auth.dto.UserProfileResponse;
+import com.nathannolacio.escala_do_reino_backend.auth.security.CustomUserDetails;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AuthService {
@@ -36,13 +41,24 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
         User user = repository.findByEmail(request.email())
-                .orElseThrow();
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas"));
 
         if (!encoder.matches(request.password(), user.getPassword())) {
-            throw new RuntimeException("Credenciais inválidas");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas");
         }
 
         String token = jwtService.generateToken(user.getEmail());
         return new AuthResponse(token);
     }
+
+    public UserProfileResponse getCurrentUser() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new RuntimeException("Usuário não autenticado");
+        }
+        
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        return UserProfileResponse.from(userDetails);
+    }
+
 }
