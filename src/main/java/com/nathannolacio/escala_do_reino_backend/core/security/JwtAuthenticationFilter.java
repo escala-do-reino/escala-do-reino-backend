@@ -1,6 +1,5 @@
 package com.nathannolacio.escala_do_reino_backend.core.security;
 
-import com.nathannolacio.escala_do_reino_backend.core.security.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

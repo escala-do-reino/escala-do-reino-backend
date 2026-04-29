@@ -1,6 +1,5 @@
 package com.nathannolacio.escala_do_reino_backend.core.security;
 
-import com.nathannolacio.escala_do_reino_backend.core.security.JwtProperties;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
