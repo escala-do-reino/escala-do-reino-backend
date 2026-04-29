@@ -1,4 +1,4 @@
-package com.nathannolacio.escala_do_reino_backend.auth.security;
+package com.nathannolacio.escala_do_reino_backend.core.security;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;

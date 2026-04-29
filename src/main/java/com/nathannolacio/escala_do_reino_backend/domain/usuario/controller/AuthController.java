@@ -1,9 +1,9 @@
-package com.nathannolacio.escala_do_reino_backend.auth.controller;
+package com.nathannolacio.escala_do_reino_backend.domain.usuario.controller;
 
-import com.nathannolacio.escala_do_reino_backend.auth.dto.AuthResponse;
-import com.nathannolacio.escala_do_reino_backend.auth.dto.LoginRequest;
-import com.nathannolacio.escala_do_reino_backend.auth.dto.RegisterRequest;
-import com.nathannolacio.escala_do_reino_backend.auth.service.AuthService;
+import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.AuthResponse;
+import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.LoginRequest;
+import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.RegisterRequest;
+import com.nathannolacio.escala_do_reino_backend.domain.usuario.service.AuthService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;

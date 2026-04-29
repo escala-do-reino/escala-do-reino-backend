@@ -1,4 +1,4 @@
-package com.nathannolacio.escala_do_reino_backend.auth.entity;
+package com.nathannolacio.escala_do_reino_backend.domain.usuario.model;
 
 import jakarta.persistence.*;
 

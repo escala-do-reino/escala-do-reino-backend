@@ -1,6 +1,6 @@
-package com.nathannolacio.escala_do_reino_backend.auth.repository;
+package com.nathannolacio.escala_do_reino_backend.domain.usuario.repository;
 
-import com.nathannolacio.escala_do_reino_backend.auth.entity.User;
+import com.nathannolacio.escala_do_reino_backend.domain.usuario.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

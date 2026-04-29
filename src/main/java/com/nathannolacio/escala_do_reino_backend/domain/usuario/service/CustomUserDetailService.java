@@ -1,7 +1,7 @@
-package com.nathannolacio.escala_do_reino_backend.auth.service;
+package com.nathannolacio.escala_do_reino_backend.domain.usuario.service;
 
-import com.nathannolacio.escala_do_reino_backend.auth.entity.User;
-import com.nathannolacio.escala_do_reino_backend.auth.repository.UserRepository;
+import com.nathannolacio.escala_do_reino_backend.domain.usuario.model.User;
+import com.nathannolacio.escala_do_reino_backend.domain.usuario.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;

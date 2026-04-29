@@ -1,11 +1,12 @@
-package com.nathannolacio.escala_do_reino_backend.auth.service;
+package com.nathannolacio.escala_do_reino_backend.domain.usuario.service;
 
-import com.nathannolacio.escala_do_reino_backend.auth.dto.AuthResponse;
-import com.nathannolacio.escala_do_reino_backend.auth.dto.LoginRequest;
-import com.nathannolacio.escala_do_reino_backend.auth.dto.RegisterRequest;
-import com.nathannolacio.escala_do_reino_backend.auth.entity.Role;
-import com.nathannolacio.escala_do_reino_backend.auth.entity.User;
-import com.nathannolacio.escala_do_reino_backend.auth.repository.UserRepository;
+import com.nathannolacio.escala_do_reino_backend.core.security.JwtService;
+import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.AuthResponse;
+import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.LoginRequest;
+import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.RegisterRequest;
+import com.nathannolacio.escala_do_reino_backend.domain.usuario.model.Role;
+import com.nathannolacio.escala_do_reino_backend.domain.usuario.model.User;
+import com.nathannolacio.escala_do_reino_backend.domain.usuario.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 

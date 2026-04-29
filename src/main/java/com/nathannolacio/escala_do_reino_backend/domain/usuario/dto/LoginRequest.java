@@ -1,4 +1,4 @@
-package com.nathannolacio.escala_do_reino_backend.auth.dto;
+package com.nathannolacio.escala_do_reino_backend.domain.usuario.dto;
 
 public record LoginRequest(
         String email,
