@@ -1,10 +1,14 @@
 package com.nathannolacio.escala_do_reino_backend.domain.usuario.service;
 
+import com.nathannolacio.escala_do_reino_backend.core.security.CustomUserDetails;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.model.User;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.repository.UserRepository;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class CustomUserDetailService implements UserDetailsService {
@@ -20,10 +24,12 @@ public class CustomUserDetailService implements UserDetailsService {
         User user = repository.findByEmail(email)
                 .orElseThrow();
 
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getEmail())
-                .password(user.getPassword())
-                .roles(user.getRole().name())
-                .build();
+        return new CustomUserDetails(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getPassword(),
+                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
+        );
     }
 }
