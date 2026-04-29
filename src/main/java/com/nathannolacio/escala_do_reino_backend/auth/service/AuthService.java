@@ -1,0 +1,48 @@
+package com.nathannolacio.escala_do_reino_backend.auth.service;
+
+import com.nathannolacio.escala_do_reino_backend.auth.dto.AuthResponse;
+import com.nathannolacio.escala_do_reino_backend.auth.dto.LoginRequest;
+import com.nathannolacio.escala_do_reino_backend.auth.dto.RegisterRequest;
+import com.nathannolacio.escala_do_reino_backend.auth.entity.Role;
+import com.nathannolacio.escala_do_reino_backend.auth.entity.User;
+import com.nathannolacio.escala_do_reino_backend.auth.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+@Service
+public class AuthService {
+    private final UserRepository repository;
+    private final PasswordEncoder encoder;
+    private final JwtService jwtService;
+
+    public AuthService(UserRepository repository, PasswordEncoder encoder, JwtService jwtService) {
+        this.repository = repository;
+        this.encoder = encoder;
+        this.jwtService = jwtService;
+    }
+
+    public AuthResponse register(RegisterRequest request) {
+        User user = new User();
+        user.setName(request.name());
+        user.setEmail(request.email());
+        user.setPassword(encoder.encode(request.password()));
+        user.setRole(Role.USER);
+
+        repository.save(user);
+
+        String token = jwtService.generateToken(user.getEmail());
+        return new AuthResponse(token);
+    }
+
+    public AuthResponse login(LoginRequest request) {
+        User user = repository.findByEmail(request.email())
+                .orElseThrow();
+
+        if (!encoder.matches(request.password(), user.getPassword())) {
+            throw new RuntimeException("Credenciais inválidas");
+        }
+
+        String token = jwtService.generateToken(user.getEmail());
+        return new AuthResponse(token);
+    }
+}
