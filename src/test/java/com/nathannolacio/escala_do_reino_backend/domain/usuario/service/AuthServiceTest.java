@@ -2,6 +2,8 @@ package com.nathannolacio.escala_do_reino_backend.domain.usuario.service;
 
 import com.nathannolacio.escala_do_reino_backend.core.security.CustomUserDetails;
 import com.nathannolacio.escala_do_reino_backend.core.security.JwtService;
+import com.nathannolacio.escala_do_reino_backend.domain.igreja.dto.IgrejaResponse;
+import com.nathannolacio.escala_do_reino_backend.domain.igreja.service.IgrejaService;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.AuthResponse;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.LoginRequest;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.RegisterRequest;
@@ -42,6 +44,9 @@ class AuthServiceTest {
 
     @Mock
     private JwtService jwtService;
+
+    @Mock
+    private IgrejaService igrejaService;
 
     @InjectMocks
     private AuthService authService;
@@ -125,7 +130,7 @@ class AuthServiceTest {
     @Test
     void getCurrentUser_Success() {
         CustomUserDetails userDetails = new CustomUserDetails(
-                1L, "Nathan", "test@test.com", "encodedPassword",
+                1L, "Nathan", "test@test.com", "encodedPassword", 10L,
                 List.of(new SimpleGrantedAuthority("ROLE_USER"))
         );
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
@@ -133,11 +138,16 @@ class AuthServiceTest {
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
+        IgrejaResponse igrejaMock = new IgrejaResponse(10L, "Igreja Teste", "Setor 1", "Rua A", "Cidade B", "SP");
+        when(igrejaService.buscarResponsePorId(10L)).thenReturn(igrejaMock);
+
         UserProfileResponse response = authService.getCurrentUser();
 
         assertThat(response).isNotNull();
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.email()).isEqualTo("test@test.com");
+        assertThat(response.igreja()).isNotNull();
+        assertThat(response.igreja().nome()).isEqualTo("Igreja Teste");
     }
 
     @Test

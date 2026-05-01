@@ -75,7 +75,7 @@ class AuthControllerTest {
 
     @Test
     void getCurrentUser_ReturnsUserProfileResponse() throws Exception {
-        UserProfileResponse response = new UserProfileResponse(1L, "Nathan", "test@test.com", List.of("ROLE_USER"));
+        UserProfileResponse response = new UserProfileResponse(1L, "Nathan", "test@test.com", List.of("ROLE_USER"), null);
 
         when(authService.getCurrentUser()).thenReturn(response);
 

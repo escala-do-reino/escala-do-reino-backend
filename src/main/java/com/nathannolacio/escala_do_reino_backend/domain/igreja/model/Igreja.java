@@ -15,6 +15,9 @@ public class Igreja {
     @Column(nullable = false)
     private String nome;
 
+    @Column(nullable = true)
+    private String setor;
+
     @Column(name = "data_criacao", nullable = false, updatable = false)
     private LocalDateTime dataCriacao;
 
@@ -49,6 +52,14 @@ public class Igreja {
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    public String getSetor() {
+        return setor;
+    }
+
+    public void setSetor(String setor) {
+        this.setor = setor;
     }
 
     public LocalDateTime getDataCriacao() {

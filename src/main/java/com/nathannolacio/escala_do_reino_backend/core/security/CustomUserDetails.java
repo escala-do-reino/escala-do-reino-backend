@@ -11,6 +11,7 @@ public class CustomUserDetails implements UserDetails {
     private String name;
     private String email;
     private String password;
+    private Long igrejaId;
     private Collection<? extends GrantedAuthority> authorities;
 
     public CustomUserDetails(
@@ -18,12 +19,14 @@ public class CustomUserDetails implements UserDetails {
             String name,
             String email,
             String password,
+            Long igrejaId,
             Collection<? extends GrantedAuthority> authorities
     ) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.password = password;
+        this.igrejaId = igrejaId;
         this.authorities = authorities;
     }
 
@@ -33,6 +36,10 @@ public class CustomUserDetails implements UserDetails {
 
     public String getName() {
         return name;
+    }
+
+    public Long getIgrejaId() {
+        return igrejaId;
     }
 
     @Override

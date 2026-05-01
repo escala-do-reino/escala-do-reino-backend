@@ -2,6 +2,8 @@ package com.nathannolacio.escala_do_reino_backend.domain.usuario.service;
 
 import com.nathannolacio.escala_do_reino_backend.core.security.CustomUserDetails;
 import com.nathannolacio.escala_do_reino_backend.core.security.JwtService;
+import com.nathannolacio.escala_do_reino_backend.domain.igreja.dto.IgrejaResponse;
+import com.nathannolacio.escala_do_reino_backend.domain.igreja.service.IgrejaService;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.AuthResponse;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.LoginRequest;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.RegisterRequest;
@@ -24,11 +26,13 @@ public class AuthService {
     private final UserRepository repository;
     private final PasswordEncoder encoder;
     private final JwtService jwtService;
+    private final IgrejaService igrejaService;
 
-    public AuthService(UserRepository repository, PasswordEncoder encoder, JwtService jwtService) {
+    public AuthService(UserRepository repository, PasswordEncoder encoder, JwtService jwtService, IgrejaService igrejaService) {
         this.repository = repository;
         this.encoder = encoder;
         this.jwtService = jwtService;
+        this.igrejaService = igrejaService;
     }
 
     public AuthResponse register(RegisterRequest request) {
@@ -80,7 +84,17 @@ public class AuthService {
         }
         
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        return UserProfileResponse.from(userDetails);
+        
+        IgrejaResponse igrejaResponse = null;
+        if (userDetails.getIgrejaId() != null) {
+            try {
+                igrejaResponse = igrejaService.buscarResponsePorId(userDetails.getIgrejaId());
+            } catch (Exception e) {
+                logger.warn("Igreja ID {} não encontrada para o usuário {}", userDetails.getIgrejaId(), userDetails.getUsername());
+            }
+        }
+        
+        return UserProfileResponse.from(userDetails, igrejaResponse);
     }
 
 }

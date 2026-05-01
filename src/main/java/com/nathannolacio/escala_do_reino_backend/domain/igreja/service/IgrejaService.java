@@ -86,8 +86,20 @@ public class IgrejaService {
         return new IgrejaResponse(
                 igreja.getId(),
                 igreja.getNome(),
+                igreja.getSetor(),
+                igreja.getEndereco() != null ? igreja.getEndereco().getLogradouro() : null,
                 igreja.getEndereco() != null ? igreja.getEndereco().getCidade() : null,
                 igreja.getEndereco() != null ? igreja.getEndereco().getEstado() : null
         );
+    }
+
+    public Igreja buscarPorId(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Igreja não encontrada"));
+    }
+
+    public IgrejaResponse buscarResponsePorId(Long id) {
+        Igreja igreja = buscarPorId(id);
+        return toResponse(igreja);
     }
 }
