@@ -6,6 +6,9 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: validate
+    properties:
+      hibernate:
+        tenant_identifier_resolver: com.nathannolacio.escala_do_reino_backend.core.config.TenantIdentifierResolver
 
   flyway:
     enabled: true

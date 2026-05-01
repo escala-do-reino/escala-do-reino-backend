@@ -43,6 +43,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String username = jwtService.extractUsername(token);
 
+        Long igrejaId = jwtService.extractIgrejaId(token);
+        if (igrejaId != null) {
+            TenantContext.setCurrentTenant(igrejaId);
+        }
+
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
@@ -64,6 +69,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        filterChain.doFilter(request, response);
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            TenantContext.clear();
+        }
     }
 }
