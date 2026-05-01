@@ -45,6 +45,7 @@ public class AuthController {
     @Operation(summary = "Autenticar usuário", description = "Realiza o login e retorna um token JWT.")
     @ApiResponse(responseCode = "200", description = "Login realizado com sucesso")
     @ApiResponse(responseCode = "401", description = "E-mail ou senha inválidos", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @SecurityRequirements({})
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {

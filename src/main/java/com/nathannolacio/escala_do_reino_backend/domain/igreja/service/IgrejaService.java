@@ -1,6 +1,7 @@
 package com.nathannolacio.escala_do_reino_backend.domain.igreja.service;
 
 import com.nathannolacio.escala_do_reino_backend.core.security.JwtService;
+import com.nathannolacio.escala_do_reino_backend.core.util.MaskUtils;
 import com.nathannolacio.escala_do_reino_backend.domain.igreja.dto.IgrejaCreateResponse;
 import com.nathannolacio.escala_do_reino_backend.domain.igreja.dto.IgrejaRequest;
 import com.nathannolacio.escala_do_reino_backend.domain.igreja.dto.IgrejaResponse;
@@ -37,13 +38,13 @@ public class IgrejaService {
     @Transactional
     public IgrejaCreateResponse criar(IgrejaRequest request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        logger.info("Usuário {} solicitou criação da igreja: {}", email, request.nome());
+        logger.info("Usuário {} solicitou criação da igreja: {}", MaskUtils.maskEmail(email), request.nome());
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsuarioNotFoundException(email));
 
         if (user.getIgrejaId() != null && user.getIgrejaId() != 0L) {
-            logger.warn("Falha na criação: Usuário {} já está vinculado à igreja ID {}", email, user.getIgrejaId());
+            logger.warn("Falha na criação: Usuário {} já está vinculado à igreja ID {}", MaskUtils.maskEmail(email), user.getIgrejaId());
             throw new UsuarioJaVinculadoException();
         }
 
@@ -69,7 +70,7 @@ public class IgrejaService {
         // Gera um novo token contendo o ID da nova igreja
         String novoToken = jwtService.generateToken(user.getEmail(), salva.getId());
         
-        logger.info("Igreja criada e usuário {} vinculado com novo token. ID Igreja: {}", email, salva.getId());
+        logger.info("Igreja criada e usuário {} vinculado com novo token. ID Igreja: {}", MaskUtils.maskEmail(email), salva.getId());
 
         return new IgrejaCreateResponse(toResponse(salva), novoToken);
     }
