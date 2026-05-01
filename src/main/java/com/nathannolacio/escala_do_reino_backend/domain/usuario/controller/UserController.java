@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/usuarios")
 @Tag(name = "Usuários", description = "Endpoints para gestão de perfil e vínculo de usuários")
+@SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
     private final UserService userService;
@@ -29,6 +31,7 @@ public class UserController {
     @ApiResponse(responseCode = "200", description = "Vínculo realizado com sucesso")
     @ApiResponse(responseCode = "404", description = "Igreja não encontrada", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @ApiResponse(responseCode = "401", description = "Usuário não autenticado", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "409", description = "Usuário já possui vínculo com uma igreja", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PatchMapping("/vincular-igreja/{id}")
     public ResponseEntity<AuthResponse> vincularIgreja(@PathVariable Long id) {
         AuthResponse response = userService.vincularIgreja(id);

@@ -4,6 +4,6 @@ import com.nathannolacio.escala_do_reino_backend.core.exception.ConflictExceptio
 
 public class EmailJaCadastradoException extends ConflictException {
     public EmailJaCadastradoException(String email) {
-        super("O e-mail '" + email + "' já está cadastrado no sistema.");
+        super("O e-mail informado já está cadastrado no sistema.");
     }
 }

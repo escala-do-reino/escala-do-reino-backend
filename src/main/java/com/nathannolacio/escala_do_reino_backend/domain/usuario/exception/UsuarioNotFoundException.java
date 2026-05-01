@@ -8,6 +8,6 @@ public class UsuarioNotFoundException extends EntityNotFoundException {
     }
 
     public UsuarioNotFoundException(String email) {
-        super("Usuário com e-mail '" + email + "' não encontrado.");
+        super("Usuário não encontrado.");
     }
 }

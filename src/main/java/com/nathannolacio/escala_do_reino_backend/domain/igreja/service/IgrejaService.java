@@ -1,7 +1,10 @@
 package com.nathannolacio.escala_do_reino_backend.domain.igreja.service;
 
+import com.nathannolacio.escala_do_reino_backend.core.security.JwtService;
+import com.nathannolacio.escala_do_reino_backend.domain.igreja.dto.IgrejaCreateResponse;
 import com.nathannolacio.escala_do_reino_backend.domain.igreja.dto.IgrejaRequest;
 import com.nathannolacio.escala_do_reino_backend.domain.igreja.dto.IgrejaResponse;
+import com.nathannolacio.escala_do_reino_backend.domain.igreja.exception.IgrejaNotFoundException;
 import com.nathannolacio.escala_do_reino_backend.domain.igreja.model.Endereco;
 import com.nathannolacio.escala_do_reino_backend.domain.igreja.model.Igreja;
 import com.nathannolacio.escala_do_reino_backend.domain.igreja.repository.IgrejaRepository;
@@ -23,21 +26,22 @@ public class IgrejaService {
 
     private final IgrejaRepository repository;
     private final UserRepository userRepository;
+    private final JwtService jwtService;
 
-    public IgrejaService(IgrejaRepository repository, UserRepository userRepository) {
+    public IgrejaService(IgrejaRepository repository, UserRepository userRepository, JwtService jwtService) {
         this.repository = repository;
         this.userRepository = userRepository;
+        this.jwtService = jwtService;
     }
 
     @Transactional
-    public IgrejaResponse criar(IgrejaRequest request) {
+    public IgrejaCreateResponse criar(IgrejaRequest request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         logger.info("Usuário {} solicitou criação da igreja: {}", email, request.nome());
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsuarioNotFoundException(email));
 
-        // Valida se o usuário já possui vínculo (ID diferente de 0)
         if (user.getIgrejaId() != null && user.getIgrejaId() != 0L) {
             logger.warn("Falha na criação: Usuário {} já está vinculado à igreja ID {}", email, user.getIgrejaId());
             throw new UsuarioJaVinculadoException();
@@ -59,13 +63,15 @@ public class IgrejaService {
 
         Igreja salva = repository.save(igreja);
         
-        // Vincula o criador à nova igreja automaticamente
         user.setIgrejaId(salva.getId());
         userRepository.save(user);
         
-        logger.info("Igreja criada e usuário {} vinculado com sucesso. ID Igreja: {}", email, salva.getId());
+        // Gera um novo token contendo o ID da nova igreja
+        String novoToken = jwtService.generateToken(user.getEmail(), salva.getId());
+        
+        logger.info("Igreja criada e usuário {} vinculado com novo token. ID Igreja: {}", email, salva.getId());
 
-        return toResponse(salva);
+        return new IgrejaCreateResponse(toResponse(salva), novoToken);
     }
 
     public List<IgrejaResponse> listarTodas(String nome) {
@@ -95,7 +101,7 @@ public class IgrejaService {
 
     public Igreja buscarPorId(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Igreja não encontrada"));
+                .orElseThrow(() -> new IgrejaNotFoundException(id));
     }
 
     public IgrejaResponse buscarResponsePorId(Long id) {

@@ -1,5 +1,7 @@
 package com.nathannolacio.escala_do_reino_backend.domain.igreja.service;
 
+import com.nathannolacio.escala_do_reino_backend.core.security.JwtService;
+import com.nathannolacio.escala_do_reino_backend.domain.igreja.dto.IgrejaCreateResponse;
 import com.nathannolacio.escala_do_reino_backend.domain.igreja.dto.IgrejaRequest;
 import com.nathannolacio.escala_do_reino_backend.domain.igreja.dto.IgrejaResponse;
 import com.nathannolacio.escala_do_reino_backend.domain.igreja.model.Igreja;
@@ -35,6 +37,9 @@ class IgrejaServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private JwtService jwtService;
+
     @InjectMocks
     private IgrejaService igrejaService;
 
@@ -65,15 +70,18 @@ class IgrejaServiceTest {
 
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(defaultUser));
         when(repository.save(any(Igreja.class))).thenReturn(igrejaSalva);
+        when(jwtService.generateToken("test@test.com", 10L)).thenReturn("new-jwt-token");
 
-        IgrejaResponse response = igrejaService.criar(request);
+        IgrejaCreateResponse response = igrejaService.criar(request);
 
         assertThat(response).isNotNull();
-        assertThat(response.id()).isEqualTo(10L);
+        assertThat(response.igreja().id()).isEqualTo(10L);
+        assertThat(response.token()).isEqualTo("new-jwt-token");
         assertThat(defaultUser.getIgrejaId()).isEqualTo(10L);
 
         verify(repository).save(any(Igreja.class));
         verify(userRepository).save(defaultUser);
+        verify(jwtService).generateToken("test@test.com", 10L);
     }
 
     @Test

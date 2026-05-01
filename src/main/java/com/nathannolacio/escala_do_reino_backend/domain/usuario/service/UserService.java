@@ -31,16 +31,16 @@ public class UserService {
     @Transactional
     public AuthResponse vincularIgreja(Long igrejaId) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        logger.info("Tentativa de vincular usuário {} à igreja ID {}", email, igrejaId);
+        logger.info("Tentativa de vincular usuário {} à igreja ID {}", maskEmail(email), igrejaId);
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> {
-                    logger.error("Falha ao vincular: Usuário {} não encontrado", email);
+                    logger.error("Falha ao vincular: Usuário {} não encontrado", maskEmail(email));
                     return new UsuarioNotFoundException(email);
                 });
 
         if (user.getIgrejaId() != null && user.getIgrejaId() != 0L) {
-            logger.warn("Falha ao vincular: Usuário {} já está vinculado à igreja ID {}", email, user.getIgrejaId());
+            logger.warn("Falha ao vincular: Usuário {} já está vinculado à igreja ID {}", maskEmail(email), user.getIgrejaId());
             throw new UsuarioJaVinculadoException();
         }
 
@@ -51,9 +51,18 @@ public class UserService {
 
         user.setIgrejaId(igrejaId);
         userRepository.save(user);
-        logger.info("Usuário {} vinculado com sucesso à igreja ID {}", email, igrejaId);
+        logger.info("Usuário {} vinculado com sucesso à igreja ID {}", maskEmail(email), igrejaId);
 
         String newToken = jwtService.generateToken(user.getEmail(), user.getIgrejaId());
         return new AuthResponse(newToken);
+    }
+
+    private String maskEmail(String email) {
+        if (email == null || !email.contains("@")) return "---";
+        int atIndex = email.indexOf("@");
+        String name = email.substring(0, atIndex);
+        String domain = email.substring(atIndex);
+        if (name.length() <= 2) return name + "***" + domain;
+        return name.substring(0, 2) + "***" + domain;
     }
 }

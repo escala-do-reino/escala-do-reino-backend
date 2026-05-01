@@ -1,5 +1,6 @@
 package com.nathannolacio.escala_do_reino_backend.domain.usuario.service;
 
+import com.nathannolacio.escala_do_reino_backend.core.exception.SecurityException;
 import com.nathannolacio.escala_do_reino_backend.core.security.CustomUserDetails;
 import com.nathannolacio.escala_do_reino_backend.core.security.JwtService;
 import com.nathannolacio.escala_do_reino_backend.domain.igreja.dto.IgrejaResponse;
@@ -88,7 +89,7 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.register(request))
                 .isInstanceOf(EmailJaCadastradoException.class)
-                .hasMessageContaining("já está cadastrado");
+                .hasMessageContaining("já está cadastrado no sistema");
 
         verify(repository, never()).save(any());
     }
@@ -155,7 +156,7 @@ class AuthServiceTest {
         SecurityContextHolder.clearContext();
 
         assertThatThrownBy(() -> authService.getCurrentUser())
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(SecurityException.class)
                 .hasMessageContaining("Usuário não autenticado");
     }
 }

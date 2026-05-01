@@ -3,6 +3,7 @@ package com.nathannolacio.escala_do_reino_backend.domain.usuario.service;
 import com.nathannolacio.escala_do_reino_backend.core.security.CustomUserDetails;
 import com.nathannolacio.escala_do_reino_backend.core.security.JwtService;
 import com.nathannolacio.escala_do_reino_backend.domain.igreja.dto.IgrejaResponse;
+import com.nathannolacio.escala_do_reino_backend.domain.igreja.exception.IgrejaNotFoundException;
 import com.nathannolacio.escala_do_reino_backend.domain.igreja.service.IgrejaService;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.AuthResponse;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.LoginRequest;
@@ -10,6 +11,7 @@ import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.RegisterRequ
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.UserProfileResponse;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.exception.CredenciaisInvalidasException;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.exception.EmailJaCadastradoException;
+import com.nathannolacio.escala_do_reino_backend.core.exception.SecurityException;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.model.Role;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.model.User;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.repository.UserRepository;
@@ -36,10 +38,10 @@ public class AuthService {
     }
 
     public AuthResponse register(RegisterRequest request) {
-        logger.info("Iniciando registro de novo usuário com e-mail: {}", request.email());
+        logger.info("Iniciando registro de novo usuário com e-mail: {}", maskEmail(request.email()));
 
         if (repository.findByEmail(request.email()).isPresent()) {
-            logger.warn("Tentativa de registro falhou: e-mail {} já está em uso", request.email());
+            logger.warn("Tentativa de registro falhou: e-mail {} já está em uso", maskEmail(request.email()));
             throw new EmailJaCadastradoException(request.email());
         }
 
@@ -57,20 +59,20 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        logger.info("Tentativa de login para o e-mail: {}", request.email());
+        logger.info("Tentativa de login para o e-mail: {}", maskEmail(request.email()));
 
         User user = repository.findByEmail(request.email())
                 .orElseThrow(() -> {
-                    logger.warn("Falha no login: e-mail {} não encontrado", request.email());
+                    logger.warn("Falha no login: e-mail {} não encontrado", maskEmail(request.email()));
                     return new CredenciaisInvalidasException();
                 });
 
         if (!encoder.matches(request.password(), user.getPassword())) {
-            logger.warn("Falha no login para o e-mail {}: senha incorreta", request.email());
+            logger.warn("Falha no login para o e-mail {}: senha incorreta", maskEmail(request.email()));
             throw new CredenciaisInvalidasException();
         }
 
-        logger.info("Login realizado com sucesso para o usuário: {}. Igreja ID: {}", user.getEmail(), user.getIgrejaId());
+        logger.info("Login realizado com sucesso para o usuário: {}. Igreja ID: {}", maskEmail(user.getEmail()), user.getIgrejaId());
 
         String token = jwtService.generateToken(user.getEmail(), user.getIgrejaId());
         return new AuthResponse(token);
@@ -80,7 +82,7 @@ public class AuthService {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
             logger.warn("Tentativa de obter perfil sem autenticação");
-            throw new RuntimeException("Usuário não autenticado");
+            throw new SecurityException("Usuário não autenticado");
         }
         
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
@@ -89,12 +91,21 @@ public class AuthService {
         if (userDetails.getIgrejaId() != null) {
             try {
                 igrejaResponse = igrejaService.buscarResponsePorId(userDetails.getIgrejaId());
-            } catch (Exception e) {
-                logger.warn("Igreja ID {} não encontrada para o usuário {}", userDetails.getIgrejaId(), userDetails.getUsername());
+            } catch (IgrejaNotFoundException e) {
+                logger.warn("Igreja ID {} não encontrada para o usuário {}", userDetails.getIgrejaId(), maskEmail(userDetails.getUsername()));
             }
         }
         
         return UserProfileResponse.from(userDetails, igrejaResponse);
+    }
+
+    private String maskEmail(String email) {
+        if (email == null || !email.contains("@")) return "---";
+        int atIndex = email.indexOf("@");
+        String name = email.substring(0, atIndex);
+        String domain = email.substring(atIndex);
+        if (name.length() <= 2) return name + "***" + domain;
+        return name.substring(0, 2) + "***" + domain;
     }
 
 }
