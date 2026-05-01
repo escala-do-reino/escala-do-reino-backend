@@ -1,12 +1,16 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: "pt-BR"
+early_access: false
 
 reviews:
-  profile: "chill"   # menos agressivo
+  profile: "chill"
   high_level_summary: true
   poem: false
   request_changes_workflow: false
-
-path_filters:
-  - "!node_modules/**"
-  - "!dist/**"
-  - "!build/**"
+  # No v2, o path_filters costuma ficar dentro de reviews
+  path_filters:
+    - "!node_modules/**"
+    - "!dist/**"
+    - "!build/**"
+    - "!target/**" # Adicionei target pois vi que você usa Maven
+    - "!**/*.md"   # Opcional: ignorar arquivos markdown nas revisões de código
