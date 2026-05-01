@@ -1,14 +1,19 @@
 package com.nathannolacio.escala_do_reino_backend.domain.usuario.service;
 
+import com.nathannolacio.escala_do_reino_backend.core.exception.SecurityException;
+import com.nathannolacio.escala_do_reino_backend.core.security.CustomUserDetails;
 import com.nathannolacio.escala_do_reino_backend.core.security.JwtService;
+import com.nathannolacio.escala_do_reino_backend.domain.igreja.dto.IgrejaResponse;
+import com.nathannolacio.escala_do_reino_backend.domain.igreja.service.IgrejaService;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.AuthResponse;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.LoginRequest;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.RegisterRequest;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.UserProfileResponse;
+import com.nathannolacio.escala_do_reino_backend.domain.usuario.exception.CredenciaisInvalidasException;
+import com.nathannolacio.escala_do_reino_backend.domain.usuario.exception.EmailJaCadastradoException;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.model.Role;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.model.User;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.repository.UserRepository;
-import com.nathannolacio.escala_do_reino_backend.core.security.CustomUserDetails;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,12 +21,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +46,9 @@ class AuthServiceTest {
     @Mock
     private JwtService jwtService;
 
+    @Mock
+    private IgrejaService igrejaService;
+
     @InjectMocks
     private AuthService authService;
 
@@ -61,18 +67,31 @@ class AuthServiceTest {
     @Test
     void register_Success() {
         RegisterRequest request = new RegisterRequest("Nathan", "test@test.com", "password");
+        when(repository.findByEmail(request.email())).thenReturn(Optional.empty());
         when(encoder.encode(request.password())).thenReturn("encodedPassword");
         when(repository.save(any(User.class))).thenReturn(defaultUser);
-        when(jwtService.generateToken(request.email())).thenReturn("mocked-jwt-token");
+        when(jwtService.generateToken(eq(request.email()), any())).thenReturn("mocked-jwt-token");
 
         AuthResponse response = authService.register(request);
 
         assertThat(response).isNotNull();
         assertThat(response.token()).isEqualTo("mocked-jwt-token");
 
+        verify(repository).findByEmail("test@test.com");
         verify(encoder).encode("password");
         verify(repository).save(any(User.class));
-        verify(jwtService).generateToken("test@test.com");
+    }
+
+    @Test
+    void register_EmailAlreadyExists_ThrowsEmailJaCadastradoException() {
+        RegisterRequest request = new RegisterRequest("Nathan", "test@test.com", "password");
+        when(repository.findByEmail(request.email())).thenReturn(Optional.of(defaultUser));
+
+        assertThatThrownBy(() -> authService.register(request))
+                .isInstanceOf(EmailJaCadastradoException.class)
+                .hasMessageContaining("já está cadastrado no sistema");
+
+        verify(repository, never()).save(any());
     }
 
     @Test
@@ -80,7 +99,7 @@ class AuthServiceTest {
         LoginRequest request = new LoginRequest("test@test.com", "password");
         when(repository.findByEmail(request.email())).thenReturn(Optional.of(defaultUser));
         when(encoder.matches(request.password(), defaultUser.getPassword())).thenReturn(true);
-        when(jwtService.generateToken(defaultUser.getEmail())).thenReturn("mocked-jwt-token");
+        when(jwtService.generateToken(eq(defaultUser.getEmail()), any())).thenReturn("mocked-jwt-token");
 
         AuthResponse response = authService.login(request);
 
@@ -89,32 +108,30 @@ class AuthServiceTest {
     }
 
     @Test
-    void login_InvalidEmail_ThrowsResponseStatusException() {
+    void login_InvalidEmail_ThrowsCredenciaisInvalidasException() {
         LoginRequest request = new LoginRequest("notfound@test.com", "password");
         when(repository.findByEmail(request.email())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> authService.login(request))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Credenciais inválidas")
-                .hasFieldOrPropertyWithValue("statusCode", HttpStatus.UNAUTHORIZED);
+                .isInstanceOf(CredenciaisInvalidasException.class)
+                .hasMessageContaining("E-mail ou senha inválidos");
     }
 
     @Test
-    void login_InvalidPassword_ThrowsResponseStatusException() {
+    void login_InvalidPassword_ThrowsCredenciaisInvalidasException() {
         LoginRequest request = new LoginRequest("test@test.com", "wrongPassword");
         when(repository.findByEmail(request.email())).thenReturn(Optional.of(defaultUser));
         when(encoder.matches(request.password(), defaultUser.getPassword())).thenReturn(false);
 
         assertThatThrownBy(() -> authService.login(request))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Credenciais inválidas")
-                .hasFieldOrPropertyWithValue("statusCode", HttpStatus.UNAUTHORIZED);
+                .isInstanceOf(CredenciaisInvalidasException.class)
+                .hasMessageContaining("E-mail ou senha inválidos");
     }
 
     @Test
     void getCurrentUser_Success() {
         CustomUserDetails userDetails = new CustomUserDetails(
-                1L, "Nathan", "test@test.com", "encodedPassword",
+                1L, "Nathan", "test@test.com", "encodedPassword", 10L,
                 List.of(new SimpleGrantedAuthority("ROLE_USER"))
         );
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
@@ -122,12 +139,16 @@ class AuthServiceTest {
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
+        IgrejaResponse igrejaMock = new IgrejaResponse(10L, "Igreja Teste", "Setor 1", "Rua A", "Cidade B", "SP");
+        when(igrejaService.buscarResponsePorId(10L)).thenReturn(igrejaMock);
+
         UserProfileResponse response = authService.getCurrentUser();
 
         assertThat(response).isNotNull();
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.email()).isEqualTo("test@test.com");
-        assertThat(response.name()).isEqualTo("Nathan");
+        assertThat(response.igreja()).isNotNull();
+        assertThat(response.igreja().nome()).isEqualTo("Igreja Teste");
     }
 
     @Test
@@ -135,7 +156,7 @@ class AuthServiceTest {
         SecurityContextHolder.clearContext();
 
         assertThatThrownBy(() -> authService.getCurrentUser())
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(SecurityException.class)
                 .hasMessageContaining("Usuário não autenticado");
     }
 }

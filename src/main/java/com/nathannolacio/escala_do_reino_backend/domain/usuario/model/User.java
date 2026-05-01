@@ -1,6 +1,7 @@
 package com.nathannolacio.escala_do_reino_backend.domain.usuario.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.TenantId;
 
 @Entity
 @Table(name = "users")
@@ -22,6 +23,10 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+    @TenantId
+    @Column(name = "igreja_id")
+    private Long igrejaId;
 
     public User(Long id, String name, String email, String password, Role role) {
         this.id = id;
@@ -72,5 +77,13 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public Long getIgrejaId() {
+        return igrejaId;
+    }
+
+    public void setIgrejaId(Long igrejaId) {
+        this.igrejaId = igrejaId;
     }
 }

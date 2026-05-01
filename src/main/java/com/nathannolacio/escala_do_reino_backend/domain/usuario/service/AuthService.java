@@ -2,64 +2,101 @@ package com.nathannolacio.escala_do_reino_backend.domain.usuario.service;
 
 import com.nathannolacio.escala_do_reino_backend.core.security.CustomUserDetails;
 import com.nathannolacio.escala_do_reino_backend.core.security.JwtService;
+import com.nathannolacio.escala_do_reino_backend.core.util.MaskUtils;
+import com.nathannolacio.escala_do_reino_backend.domain.igreja.dto.IgrejaResponse;
+import com.nathannolacio.escala_do_reino_backend.domain.igreja.exception.IgrejaNotFoundException;
+import com.nathannolacio.escala_do_reino_backend.domain.igreja.service.IgrejaService;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.AuthResponse;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.LoginRequest;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.RegisterRequest;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.dto.UserProfileResponse;
+import com.nathannolacio.escala_do_reino_backend.domain.usuario.exception.CredenciaisInvalidasException;
+import com.nathannolacio.escala_do_reino_backend.domain.usuario.exception.EmailJaCadastradoException;
+import com.nathannolacio.escala_do_reino_backend.core.exception.SecurityException;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.model.Role;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.model.User;
 import com.nathannolacio.escala_do_reino_backend.domain.usuario.repository.UserRepository;
-import org.springframework.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AuthService {
+    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
+
     private final UserRepository repository;
     private final PasswordEncoder encoder;
     private final JwtService jwtService;
+    private final IgrejaService igrejaService;
 
-    public AuthService(UserRepository repository, PasswordEncoder encoder, JwtService jwtService) {
+    public AuthService(UserRepository repository, PasswordEncoder encoder, JwtService jwtService, IgrejaService igrejaService) {
         this.repository = repository;
         this.encoder = encoder;
         this.jwtService = jwtService;
+        this.igrejaService = igrejaService;
     }
 
     public AuthResponse register(RegisterRequest request) {
+        logger.info("Iniciando registro de novo usuário com e-mail: {}", MaskUtils.maskEmail(request.email()));
+
+        if (repository.findByEmail(request.email()).isPresent()) {
+            logger.warn("Tentativa de registro falhou: e-mail {} já está em uso", MaskUtils.maskEmail(request.email()));
+            throw new EmailJaCadastradoException(request.email());
+        }
+
         User user = new User();
         user.setName(request.name());
         user.setEmail(request.email());
         user.setPassword(encoder.encode(request.password()));
         user.setRole(Role.USER);
 
-        repository.save(user);
+        User savedUser = repository.save(user);
+        logger.info("Usuário registrado com sucesso. ID: {}, Igreja ID: {}", savedUser.getId(), savedUser.getIgrejaId());
 
-        String token = jwtService.generateToken(user.getEmail());
+        String token = jwtService.generateToken(savedUser.getEmail(), savedUser.getIgrejaId());
         return new AuthResponse(token);
     }
 
     public AuthResponse login(LoginRequest request) {
+        logger.info("Tentativa de login para o e-mail: {}", MaskUtils.maskEmail(request.email()));
+
         User user = repository.findByEmail(request.email())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas"));
+                .orElseThrow(() -> {
+                    logger.warn("Falha no login: e-mail {} não encontrado", MaskUtils.maskEmail(request.email()));
+                    return new CredenciaisInvalidasException();
+                });
 
         if (!encoder.matches(request.password(), user.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas");
+            logger.warn("Falha no login para o e-mail {}: senha incorreta", MaskUtils.maskEmail(request.email()));
+            throw new CredenciaisInvalidasException();
         }
 
-        String token = jwtService.generateToken(user.getEmail());
+        logger.info("Login realizado com sucesso para o usuário: {}. Igreja ID: {}", MaskUtils.maskEmail(user.getEmail()), user.getIgrejaId());
+
+        String token = jwtService.generateToken(user.getEmail(), user.getIgrejaId());
         return new AuthResponse(token);
     }
 
     public UserProfileResponse getCurrentUser() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
-            throw new RuntimeException("Usuário não autenticado");
+            logger.warn("Tentativa de obter perfil sem autenticação");
+            throw new SecurityException("Usuário não autenticado");
         }
         
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        return UserProfileResponse.from(userDetails);
+        
+        IgrejaResponse igrejaResponse = null;
+        if (userDetails.getIgrejaId() != null) {
+            try {
+                igrejaResponse = igrejaService.buscarResponsePorId(userDetails.getIgrejaId());
+            } catch (IgrejaNotFoundException e) {
+                logger.warn("Igreja ID {} não encontrada para o usuário {}", userDetails.getIgrejaId(), MaskUtils.maskEmail(userDetails.getUsername()));
+            }
+        }
+        
+        return UserProfileResponse.from(userDetails, igrejaResponse);
     }
-
 }

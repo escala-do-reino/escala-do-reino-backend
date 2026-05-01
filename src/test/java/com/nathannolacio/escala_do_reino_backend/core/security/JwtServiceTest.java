@@ -37,7 +37,7 @@ class JwtServiceTest {
 
     @Test
     void generateToken_Success() {
-        String token = jwtService.generateToken("test@test.com");
+        String token = jwtService.generateToken("test@test.com", 1L);
 
         assertThat(token).isNotNull();
         assertThat(token.split("\\.")).hasSize(3); // Header, Payload, Signature
@@ -45,11 +45,20 @@ class JwtServiceTest {
 
     @Test
     void extractUsername_Success() {
-        String token = jwtService.generateToken("test@test.com");
+        String token = jwtService.generateToken("test@test.com", 1L);
         
         String extractedUsername = jwtService.extractUsername(token);
 
         assertThat(extractedUsername).isEqualTo("test@test.com");
+    }
+
+    @Test
+    void extractIgrejaId_Success() {
+        String token = jwtService.generateToken("test@test.com", 1L);
+
+        Long extractedIgrejaId = jwtService.extractIgrejaId(token);
+
+        assertThat(extractedIgrejaId).isEqualTo(1L);
     }
 
     @Test
