@@ -41,9 +41,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 final Long igrejaId = jwtService.extractIgrejaId(token);
 
                 if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    UserDetails userDetails = userDetailsService.loadUserById(userId);
+                    CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserById(userId);
                     
                     try {
+                        // Validação Crítica: O Tenant do Token deve bater com o Tenant do Usuário no Banco
+                        if (igrejaId != null && !igrejaId.equals(userDetails.getIgrejaId())) {
+                            logger.error("Divergência de Tenant detectada! Token: " + igrejaId + ", Banco: " + userDetails.getIgrejaId());
+                            throw new org.springframework.security.core.AuthenticationException("Token inválido para esta igreja") {};
+                        }
+
                         if (igrejaId != null) {
                             TenantContext.setCurrentTenant(igrejaId);
                         }
