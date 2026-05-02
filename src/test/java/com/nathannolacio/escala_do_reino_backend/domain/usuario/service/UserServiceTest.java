@@ -58,6 +58,7 @@ class UserServiceTest {
         Long igrejaId = 10L;
         when(userRepository.findByEmailIgnoringTenant("test@test.com")).thenReturn(Optional.of(defaultUser));
         when(igrejaRepository.existsById(igrejaId)).thenReturn(true);
+        when(userRepository.updateIgrejaId(anyLong(), anyLong())).thenReturn(1);
         when(jwtService.generateToken(anyLong(), anyString(), anyLong())).thenReturn("new-token");
 
         AuthResponse response = userService.vincularIgreja(igrejaId);

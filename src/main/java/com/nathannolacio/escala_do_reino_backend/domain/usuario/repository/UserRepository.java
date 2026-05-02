@@ -17,6 +17,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByIdIgnoringTenant(Long id);
 
     @Modifying
-    @Query(value = "UPDATE users SET igreja_id = :igrejaId WHERE id = :userId", nativeQuery = true)
-    void updateIgrejaId(Long userId, Long igrejaId);
+    @Query(value = "UPDATE users SET igreja_id = :igrejaId WHERE id = :userId AND (igreja_id = 0 OR igreja_id IS NULL)", nativeQuery = true)
+    int updateIgrejaId(Long userId, Long igrejaId);
 }

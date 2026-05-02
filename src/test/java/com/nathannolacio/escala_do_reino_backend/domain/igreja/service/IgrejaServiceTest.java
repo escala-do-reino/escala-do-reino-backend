@@ -70,6 +70,7 @@ class IgrejaServiceTest {
 
         when(userRepository.findByEmailIgnoringTenant("test@test.com")).thenReturn(Optional.of(defaultUser));
         when(repository.save(any(Igreja.class))).thenReturn(igrejaSalva);
+        when(userRepository.updateIgrejaId(anyLong(), anyLong())).thenReturn(1);
         when(jwtService.generateToken(anyLong(), anyString(), anyLong())).thenReturn("new-jwt-token");
 
         IgrejaCreateResponse response = igrejaService.criar(request);

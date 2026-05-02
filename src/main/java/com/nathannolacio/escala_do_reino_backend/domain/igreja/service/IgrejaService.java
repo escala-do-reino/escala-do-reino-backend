@@ -64,7 +64,10 @@ public class IgrejaService {
 
         Igreja salva = repository.save(igreja);
         
-        userRepository.updateIgrejaId(user.getId(), salva.getId());
+        int updatedRows = userRepository.updateIgrejaId(user.getId(), salva.getId());
+        if (updatedRows == 0) {
+            throw new UsuarioJaVinculadoException();
+        }
         
         // Gera um novo token contendo o ID da nova igreja e o ID do usuário
         String novoToken = jwtService.generateToken(user.getId(), user.getEmail(), salva.getId());

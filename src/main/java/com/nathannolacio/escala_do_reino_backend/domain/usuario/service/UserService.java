@@ -50,7 +50,11 @@ public class UserService {
             throw new IgrejaNotFoundException(igrejaId);
         }
 
-        userRepository.updateIgrejaId(user.getId(), igrejaId);
+        int updatedRows = userRepository.updateIgrejaId(user.getId(), igrejaId);
+        if (updatedRows == 0) {
+            throw new com.nathannolacio.escala_do_reino_backend.domain.usuario.exception.UsuarioJaVinculadoException();
+        }
+        
         logger.info("Usuário {} vinculado com sucesso à igreja ID {}", MaskUtils.maskEmail(email), igrejaId);
 
         String newToken = jwtService.generateToken(user.getId(), user.getEmail(), igrejaId);
