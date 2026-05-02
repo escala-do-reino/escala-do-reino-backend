@@ -13,6 +13,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query(value = "SELECT * FROM users WHERE email = :email", nativeQuery = true)
     Optional<User> findByEmailIgnoringTenant(String email);
 
+    @Query(value = "SELECT * FROM users WHERE id = :id", nativeQuery = true)
+    Optional<User> findByIdIgnoringTenant(Long id);
+
     @Modifying
     @Query(value = "UPDATE users SET igreja_id = :igrejaId WHERE id = :userId", nativeQuery = true)
     void updateIgrejaId(Long userId, Long igrejaId);

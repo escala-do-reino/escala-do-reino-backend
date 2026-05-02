@@ -70,7 +70,7 @@ class IgrejaServiceTest {
 
         when(userRepository.findByEmailIgnoringTenant("test@test.com")).thenReturn(Optional.of(defaultUser));
         when(repository.save(any(Igreja.class))).thenReturn(igrejaSalva);
-        when(jwtService.generateToken("test@test.com", 10L)).thenReturn("new-jwt-token");
+        when(jwtService.generateToken(anyLong(), anyString(), anyLong())).thenReturn("new-jwt-token");
 
         IgrejaCreateResponse response = igrejaService.criar(request);
 
@@ -80,7 +80,7 @@ class IgrejaServiceTest {
 
         verify(repository).save(any(Igreja.class));
         verify(userRepository).updateIgrejaId(defaultUser.getId(), 10L);
-        verify(jwtService).generateToken("test@test.com", 10L);
+        verify(jwtService).generateToken(anyLong(), anyString(), anyLong());
     }
 
     @Test

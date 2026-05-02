@@ -66,8 +66,8 @@ public class IgrejaService {
         
         userRepository.updateIgrejaId(user.getId(), salva.getId());
         
-        // Gera um novo token contendo o ID da nova igreja
-        String novoToken = jwtService.generateToken(user.getEmail(), salva.getId());
+        // Gera um novo token contendo o ID da nova igreja e o ID do usuário
+        String novoToken = jwtService.generateToken(user.getId(), user.getEmail(), salva.getId());
         
         logger.info("Igreja criada e usuário {} vinculado com novo token. ID Igreja: {}", MaskUtils.maskEmail(email), salva.getId());
 

@@ -53,7 +53,7 @@ public class UserService {
         userRepository.updateIgrejaId(user.getId(), igrejaId);
         logger.info("Usuário {} vinculado com sucesso à igreja ID {}", MaskUtils.maskEmail(email), igrejaId);
 
-        String newToken = jwtService.generateToken(user.getEmail(), igrejaId);
+        String newToken = jwtService.generateToken(user.getId(), user.getEmail(), igrejaId);
         return new AuthResponse(newToken);
     }
 }

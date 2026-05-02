@@ -53,9 +53,9 @@ public class AuthService {
         user.setRole(Role.USER);
 
         User savedUser = repository.save(user);
-        logger.info("Usuário registrado com sucesso. ID: {}, Igreja ID: {}", savedUser.getId(), savedUser.getIgrejaId());
+        logger.info("Usuário {} registrado com sucesso", MaskUtils.maskEmail(savedUser.getEmail()));
 
-        String token = jwtService.generateToken(savedUser.getEmail(), savedUser.getIgrejaId());
+        String token = jwtService.generateToken(savedUser.getId(), savedUser.getEmail(), savedUser.getIgrejaId());
         return new AuthResponse(token);
     }
 
@@ -75,7 +75,7 @@ public class AuthService {
 
         logger.info("Login realizado com sucesso para o usuário: {}. Igreja ID: {}", MaskUtils.maskEmail(user.getEmail()), user.getIgrejaId());
 
-        String token = jwtService.generateToken(user.getEmail(), user.getIgrejaId());
+        String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getIgrejaId());
         return new AuthResponse(token);
     }
 

@@ -70,7 +70,7 @@ class AuthServiceTest {
         when(repository.findByEmailIgnoringTenant(request.email())).thenReturn(Optional.empty());
         when(encoder.encode(request.password())).thenReturn("encodedPassword");
         when(repository.save(any(User.class))).thenReturn(defaultUser);
-        when(jwtService.generateToken(eq(request.email()), any())).thenReturn("mocked-jwt-token");
+        when(jwtService.generateToken(anyLong(), anyString(), any())).thenReturn("mocked-jwt-token");
 
         AuthResponse response = authService.register(request);
 
@@ -99,7 +99,7 @@ class AuthServiceTest {
         LoginRequest request = new LoginRequest("test@test.com", "password");
         when(repository.findByEmailIgnoringTenant(request.email())).thenReturn(Optional.of(defaultUser));
         when(encoder.matches(request.password(), defaultUser.getPassword())).thenReturn(true);
-        when(jwtService.generateToken(eq(defaultUser.getEmail()), any())).thenReturn("mocked-jwt-token");
+        when(jwtService.generateToken(anyLong(), anyString(), any())).thenReturn("mocked-jwt-token");
 
         AuthResponse response = authService.login(request);
 
