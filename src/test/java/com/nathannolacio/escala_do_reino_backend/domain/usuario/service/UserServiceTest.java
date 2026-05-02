@@ -56,22 +56,22 @@ class UserServiceTest {
     @Test
     void vincularIgreja_Success() {
         Long igrejaId = 10L;
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(defaultUser));
+        when(userRepository.findByEmailIgnoringTenant("test@test.com")).thenReturn(Optional.of(defaultUser));
         when(igrejaRepository.existsById(igrejaId)).thenReturn(true);
-        when(jwtService.generateToken(anyString(), anyLong())).thenReturn("new-token");
+        when(userRepository.updateIgrejaId(anyLong(), anyLong())).thenReturn(1);
+        when(jwtService.generateToken(anyLong(), anyString(), anyLong())).thenReturn("new-token");
 
         AuthResponse response = userService.vincularIgreja(igrejaId);
 
         assertThat(response).isNotNull();
         assertThat(response.token()).isEqualTo("new-token");
-        assertThat(defaultUser.getIgrejaId()).isEqualTo(igrejaId);
 
-        verify(userRepository).save(defaultUser);
+        verify(userRepository).updateIgrejaId(defaultUser.getId(), igrejaId);
     }
 
     @Test
     void vincularIgreja_UserNotFound_ThrowsUsuarioNotFoundException() {
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmailIgnoringTenant("test@test.com")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.vincularIgreja(10L))
                 .isInstanceOf(UsuarioNotFoundException.class);
@@ -80,7 +80,7 @@ class UserServiceTest {
     @Test
     void vincularIgreja_IgrejaNotFound_ThrowsIgrejaNotFoundException() {
         Long igrejaId = 99L;
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(defaultUser));
+        when(userRepository.findByEmailIgnoringTenant("test@test.com")).thenReturn(Optional.of(defaultUser));
         when(igrejaRepository.existsById(igrejaId)).thenReturn(false);
 
         assertThatThrownBy(() -> userService.vincularIgreja(igrejaId))

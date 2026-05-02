@@ -41,7 +41,7 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         logger.info("Iniciando registro de novo usuário com e-mail: {}", MaskUtils.maskEmail(request.email()));
 
-        if (repository.findByEmail(request.email()).isPresent()) {
+        if (repository.findByEmailIgnoringTenant(request.email()).isPresent()) {
             logger.warn("Tentativa de registro falhou: e-mail {} já está em uso", MaskUtils.maskEmail(request.email()));
             throw new EmailJaCadastradoException(request.email());
         }
@@ -53,16 +53,16 @@ public class AuthService {
         user.setRole(Role.USER);
 
         User savedUser = repository.save(user);
-        logger.info("Usuário registrado com sucesso. ID: {}, Igreja ID: {}", savedUser.getId(), savedUser.getIgrejaId());
+        logger.info("Usuário {} registrado com sucesso", MaskUtils.maskEmail(savedUser.getEmail()));
 
-        String token = jwtService.generateToken(savedUser.getEmail(), savedUser.getIgrejaId());
+        String token = jwtService.generateToken(savedUser.getId(), savedUser.getEmail(), savedUser.getIgrejaId());
         return new AuthResponse(token);
     }
 
     public AuthResponse login(LoginRequest request) {
         logger.info("Tentativa de login para o e-mail: {}", MaskUtils.maskEmail(request.email()));
 
-        User user = repository.findByEmail(request.email())
+        User user = repository.findByEmailIgnoringTenant(request.email())
                 .orElseThrow(() -> {
                     logger.warn("Falha no login: e-mail {} não encontrado", MaskUtils.maskEmail(request.email()));
                     return new CredenciaisInvalidasException();
@@ -75,21 +75,24 @@ public class AuthService {
 
         logger.info("Login realizado com sucesso para o usuário: {}. Igreja ID: {}", MaskUtils.maskEmail(user.getEmail()), user.getIgrejaId());
 
-        String token = jwtService.generateToken(user.getEmail(), user.getIgrejaId());
+        String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getIgrejaId());
         return new AuthResponse(token);
     }
 
     public UserProfileResponse getCurrentUser() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
-            logger.warn("Tentativa de obter perfil sem autenticação");
+        
+        if (authentication == null || !authentication.isAuthenticated() || 
+            "anonymousUser".equals(authentication.getPrincipal()) || 
+            !(authentication.getPrincipal() instanceof CustomUserDetails)) {
+            logger.warn("Tentativa de obter perfil sem autenticação válida");
             throw new SecurityException("Usuário não autenticado");
         }
         
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         
         IgrejaResponse igrejaResponse = null;
-        if (userDetails.getIgrejaId() != null) {
+        if (userDetails.getIgrejaId() != null && userDetails.getIgrejaId() != 0L) {
             try {
                 igrejaResponse = igrejaService.buscarResponsePorId(userDetails.getIgrejaId());
             } catch (IgrejaNotFoundException e) {

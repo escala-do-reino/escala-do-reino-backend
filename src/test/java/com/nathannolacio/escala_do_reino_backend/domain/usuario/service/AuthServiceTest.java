@@ -67,17 +67,17 @@ class AuthServiceTest {
     @Test
     void register_Success() {
         RegisterRequest request = new RegisterRequest("Nathan", "test@test.com", "password");
-        when(repository.findByEmail(request.email())).thenReturn(Optional.empty());
+        when(repository.findByEmailIgnoringTenant(request.email())).thenReturn(Optional.empty());
         when(encoder.encode(request.password())).thenReturn("encodedPassword");
         when(repository.save(any(User.class))).thenReturn(defaultUser);
-        when(jwtService.generateToken(eq(request.email()), any())).thenReturn("mocked-jwt-token");
+        when(jwtService.generateToken(anyLong(), anyString(), any())).thenReturn("mocked-jwt-token");
 
         AuthResponse response = authService.register(request);
 
         assertThat(response).isNotNull();
         assertThat(response.token()).isEqualTo("mocked-jwt-token");
 
-        verify(repository).findByEmail("test@test.com");
+        verify(repository).findByEmailIgnoringTenant("test@test.com");
         verify(encoder).encode("password");
         verify(repository).save(any(User.class));
     }
@@ -85,7 +85,7 @@ class AuthServiceTest {
     @Test
     void register_EmailAlreadyExists_ThrowsEmailJaCadastradoException() {
         RegisterRequest request = new RegisterRequest("Nathan", "test@test.com", "password");
-        when(repository.findByEmail(request.email())).thenReturn(Optional.of(defaultUser));
+        when(repository.findByEmailIgnoringTenant(request.email())).thenReturn(Optional.of(defaultUser));
 
         assertThatThrownBy(() -> authService.register(request))
                 .isInstanceOf(EmailJaCadastradoException.class)
@@ -97,9 +97,9 @@ class AuthServiceTest {
     @Test
     void login_Success() {
         LoginRequest request = new LoginRequest("test@test.com", "password");
-        when(repository.findByEmail(request.email())).thenReturn(Optional.of(defaultUser));
+        when(repository.findByEmailIgnoringTenant(request.email())).thenReturn(Optional.of(defaultUser));
         when(encoder.matches(request.password(), defaultUser.getPassword())).thenReturn(true);
-        when(jwtService.generateToken(eq(defaultUser.getEmail()), any())).thenReturn("mocked-jwt-token");
+        when(jwtService.generateToken(anyLong(), anyString(), any())).thenReturn("mocked-jwt-token");
 
         AuthResponse response = authService.login(request);
 
@@ -110,7 +110,7 @@ class AuthServiceTest {
     @Test
     void login_InvalidEmail_ThrowsCredenciaisInvalidasException() {
         LoginRequest request = new LoginRequest("notfound@test.com", "password");
-        when(repository.findByEmail(request.email())).thenReturn(Optional.empty());
+        when(repository.findByEmailIgnoringTenant(request.email())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(CredenciaisInvalidasException.class)
@@ -120,7 +120,7 @@ class AuthServiceTest {
     @Test
     void login_InvalidPassword_ThrowsCredenciaisInvalidasException() {
         LoginRequest request = new LoginRequest("test@test.com", "wrongPassword");
-        when(repository.findByEmail(request.email())).thenReturn(Optional.of(defaultUser));
+        when(repository.findByEmailIgnoringTenant(request.email())).thenReturn(Optional.of(defaultUser));
         when(encoder.matches(request.password(), defaultUser.getPassword())).thenReturn(false);
 
         assertThatThrownBy(() -> authService.login(request))

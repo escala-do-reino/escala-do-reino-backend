@@ -40,7 +40,7 @@ public class IgrejaService {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         logger.info("Usuário {} solicitou criação da igreja: {}", MaskUtils.maskEmail(email), request.nome());
 
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailIgnoringTenant(email)
                 .orElseThrow(() -> new UsuarioNotFoundException(email));
 
         if (user.getIgrejaId() != null && user.getIgrejaId() != 0L) {
@@ -64,11 +64,13 @@ public class IgrejaService {
 
         Igreja salva = repository.save(igreja);
         
-        user.setIgrejaId(salva.getId());
-        userRepository.save(user);
+        int updatedRows = userRepository.updateIgrejaId(user.getId(), salva.getId());
+        if (updatedRows == 0) {
+            throw new UsuarioJaVinculadoException();
+        }
         
-        // Gera um novo token contendo o ID da nova igreja
-        String novoToken = jwtService.generateToken(user.getEmail(), salva.getId());
+        // Gera um novo token contendo o ID da nova igreja e o ID do usuário
+        String novoToken = jwtService.generateToken(user.getId(), user.getEmail(), salva.getId());
         
         logger.info("Igreja criada e usuário {} vinculado com novo token. ID Igreja: {}", MaskUtils.maskEmail(email), salva.getId());
 

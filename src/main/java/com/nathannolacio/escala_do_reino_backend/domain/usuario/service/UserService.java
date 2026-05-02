@@ -34,7 +34,7 @@ public class UserService {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         logger.info("Tentativa de vincular usuário {} à igreja ID {}", MaskUtils.maskEmail(email), igrejaId);
 
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailIgnoringTenant(email)
                 .orElseThrow(() -> {
                     logger.error("Falha ao vincular: Usuário {} não encontrado", MaskUtils.maskEmail(email));
                     return new UsuarioNotFoundException(email);
@@ -50,11 +50,14 @@ public class UserService {
             throw new IgrejaNotFoundException(igrejaId);
         }
 
-        user.setIgrejaId(igrejaId);
-        userRepository.save(user);
+        int updatedRows = userRepository.updateIgrejaId(user.getId(), igrejaId);
+        if (updatedRows == 0) {
+            throw new com.nathannolacio.escala_do_reino_backend.domain.usuario.exception.UsuarioJaVinculadoException();
+        }
+        
         logger.info("Usuário {} vinculado com sucesso à igreja ID {}", MaskUtils.maskEmail(email), igrejaId);
 
-        String newToken = jwtService.generateToken(user.getEmail(), user.getIgrejaId());
+        String newToken = jwtService.generateToken(user.getId(), user.getEmail(), igrejaId);
         return new AuthResponse(newToken);
     }
 }

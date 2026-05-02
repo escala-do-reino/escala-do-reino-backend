@@ -24,18 +24,28 @@ public class JwtService {
         );
     }
 
-    public String generateToken(String username, Long igrejaId) {
+    public String generateToken(Long userId, String email, Long igrejaId) {
         return Jwts.builder()
                 .claim("igrejaId", igrejaId)
-                .setSubject(username)
+                .claim("email", email)
+                .setSubject(userId.toString())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
+                .setExpiration(new Date(System.currentTimeMillis() + properties.getExpiration()))
                 .signWith(getKey())
                 .compact();
     }
 
-    public String extractUsername(String token) {
-        return extractAllClaims(token).getSubject();
+    public Long extractUserId(String token) {
+        try {
+            String subject = extractAllClaims(token).getSubject();
+            return subject != null ? Long.parseLong(subject) : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    public String extractEmail(String token) {
+        return extractAllClaims(token).get("email", String.class);
     }
 
     public Long extractIgrejaId(String token) {
