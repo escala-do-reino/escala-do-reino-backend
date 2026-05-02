@@ -41,7 +41,7 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         logger.info("Iniciando registro de novo usuário com e-mail: {}", MaskUtils.maskEmail(request.email()));
 
-        if (repository.findByEmail(request.email()).isPresent()) {
+        if (repository.findByEmailIgnoringTenant(request.email()).isPresent()) {
             logger.warn("Tentativa de registro falhou: e-mail {} já está em uso", MaskUtils.maskEmail(request.email()));
             throw new EmailJaCadastradoException(request.email());
         }
@@ -62,7 +62,7 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
         logger.info("Tentativa de login para o e-mail: {}", MaskUtils.maskEmail(request.email()));
 
-        User user = repository.findByEmail(request.email())
+        User user = repository.findByEmailIgnoringTenant(request.email())
                 .orElseThrow(() -> {
                     logger.warn("Falha no login: e-mail {} não encontrado", MaskUtils.maskEmail(request.email()));
                     return new CredenciaisInvalidasException();
@@ -81,15 +81,18 @@ public class AuthService {
 
     public UserProfileResponse getCurrentUser() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
-            logger.warn("Tentativa de obter perfil sem autenticação");
+        
+        if (authentication == null || !authentication.isAuthenticated() || 
+            "anonymousUser".equals(authentication.getPrincipal()) || 
+            !(authentication.getPrincipal() instanceof CustomUserDetails)) {
+            logger.warn("Tentativa de obter perfil sem autenticação válida");
             throw new SecurityException("Usuário não autenticado");
         }
         
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         
         IgrejaResponse igrejaResponse = null;
-        if (userDetails.getIgrejaId() != null) {
+        if (userDetails.getIgrejaId() != null && userDetails.getIgrejaId() != 0L) {
             try {
                 igrejaResponse = igrejaService.buscarResponsePorId(userDetails.getIgrejaId());
             } catch (IgrejaNotFoundException e) {
