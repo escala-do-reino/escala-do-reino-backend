@@ -71,12 +71,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(org.springframework.web.bind.MissingPathVariableException.class)
     public ResponseEntity<ErrorResponse> handleMissingPathVariable(org.springframework.web.bind.MissingPathVariableException ex, HttpServletRequest request) {
         ErrorResponse error = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 LocalDateTime.now(),
-                String.format("O parâmetro de URL '%s' é obrigatório.", ex.getVariableName()),
+                String.format("Erro interno: O parâmetro de URL '%s' é obrigatório mas não foi encontrado no mapeamento.", ex.getVariableName()),
                 request.getRequestURI()
         );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
     @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
