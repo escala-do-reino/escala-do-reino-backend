@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -30,7 +31,7 @@ class CustomUserDetailServiceTest {
     @Test
     void loadUserByUsername_Success() {
         User user = new User(1L, "Nathan", "test@test.com", "password", Role.USER);
-        when(repository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
+        when(repository.findByEmailIgnoringTenant("test@test.com")).thenReturn(Optional.of(user));
 
         UserDetails userDetails = service.loadUserByUsername("test@test.com");
 
@@ -44,9 +45,9 @@ class CustomUserDetailServiceTest {
 
     @Test
     void loadUserByUsername_UserNotFound_ThrowsException() {
-        when(repository.findByEmail("notfound@test.com")).thenReturn(Optional.empty());
+        when(repository.findByEmailIgnoringTenant("notfound@test.com")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.loadUserByUsername("notfound@test.com"))
-                .isInstanceOf(NoSuchElementException.class);
+                .isInstanceOf(UsernameNotFoundException.class);
     }
 }

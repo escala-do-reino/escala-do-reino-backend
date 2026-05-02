@@ -68,7 +68,7 @@ class IgrejaServiceTest {
         igrejaSalva.setId(10L);
         igrejaSalva.setNome("Igreja Teste");
 
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(defaultUser));
+        when(userRepository.findByEmailIgnoringTenant("test@test.com")).thenReturn(Optional.of(defaultUser));
         when(repository.save(any(Igreja.class))).thenReturn(igrejaSalva);
         when(jwtService.generateToken("test@test.com", 10L)).thenReturn("new-jwt-token");
 
@@ -77,17 +77,16 @@ class IgrejaServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.igreja().id()).isEqualTo(10L);
         assertThat(response.token()).isEqualTo("new-jwt-token");
-        assertThat(defaultUser.getIgrejaId()).isEqualTo(10L);
 
         verify(repository).save(any(Igreja.class));
-        verify(userRepository).save(defaultUser);
+        verify(userRepository).updateIgrejaId(defaultUser.getId(), 10L);
         verify(jwtService).generateToken("test@test.com", 10L);
     }
 
     @Test
     void criar_UserAlreadyLinked_ThrowsUsuarioJaVinculadoException() {
         defaultUser.setIgrejaId(1L); // Já vinculado
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(defaultUser));
+        when(userRepository.findByEmailIgnoringTenant("test@test.com")).thenReturn(Optional.of(defaultUser));
 
         IgrejaRequest request = new IgrejaRequest(
                 "Nova Igreja", "Rua A", "100", null, "Bairro X", "Cidade Y", "SP", "00000-000"
