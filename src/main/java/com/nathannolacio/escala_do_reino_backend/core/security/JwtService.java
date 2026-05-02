@@ -36,8 +36,12 @@ public class JwtService {
     }
 
     public Long extractUserId(String token) {
-        String subject = extractAllClaims(token).getSubject();
-        return subject != null ? Long.parseLong(subject) : null;
+        try {
+            String subject = extractAllClaims(token).getSubject();
+            return subject != null ? Long.parseLong(subject) : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     public String extractEmail(String token) {
