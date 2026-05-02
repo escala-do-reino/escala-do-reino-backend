@@ -58,10 +58,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleTypeMismatch(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+        String typeName = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "especificado";
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 LocalDateTime.now(),
-                String.format("O parâmetro '%s' deve ser do tipo %s.", ex.getName(), ex.getRequiredType().getSimpleName()),
+                String.format("O parâmetro '%s' deve ser do tipo %s.", ex.getName(), typeName),
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
